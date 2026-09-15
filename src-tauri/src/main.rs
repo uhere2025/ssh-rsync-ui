@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    ssh_rync_ui_lib::run()
+    ssh_rsync_ui_lib::run()
 }
