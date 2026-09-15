@@ -83,9 +83,21 @@ export default function RemoteBrowser({
   return (
     <Paper
       variant="outlined"
-      sx={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: 1,
+        minWidth: 0,
+        minHeight: 0,
+        overflow: "hidden",
+      }}
     >
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", p: 1.5 }}>
+      <Stack
+        direction="row"
+        useFlexGap
+        spacing={1}
+        sx={{ alignItems: "center", flexWrap: "wrap", p: 1.5 }}
+      >
         <Tooltip title="Home">
           <span>
             <IconButton size="small" onClick={onHome} disabled={loading}>
@@ -115,19 +127,18 @@ export default function RemoteBrowser({
           size="small"
           value={pathDraft}
           onChange={(e) => setPathDraft(e.target.value)}
-          onFocus={() => setPathDraft(path)}
           onKeyDown={(e) => {
             if (e.key === "Enter") onNavigate(pathDraft.trim());
           }}
           placeholder="/var/log"
-          sx={{ flex: 1 }}
+          sx={{ flex: "1 1 200px", minWidth: 160 }}
         />
         <TextField
           size="small"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           placeholder="Filter"
-          sx={{ width: 180 }}
+          sx={{ width: 150, flexShrink: 0 }}
           slotProps={{
             input: {
               startAdornment: (
@@ -147,11 +158,12 @@ export default function RemoteBrowser({
             />
           }
           label={<Typography variant="body2">Hidden</Typography>}
+          sx={{ flexShrink: 0, mr: 0 }}
         />
       </Stack>
 
       <Box sx={{ px: 1.5, pb: 1 }}>
-        <Breadcrumbs maxItems={6} sx={{ fontSize: 13 }}>
+        <Breadcrumbs maxItems={6} separator="›" sx={{ fontSize: 13 }}>
           {crumbs(path).map((c) => (
             <Link
               key={c.path}
@@ -167,7 +179,9 @@ export default function RemoteBrowser({
         </Breadcrumbs>
       </Box>
 
-      {loading && <LinearProgress />}
+      <Box sx={{ height: 4, flexShrink: 0 }}>
+        {loading && <LinearProgress sx={{ height: 4 }} />}
+      </Box>
       <Divider />
 
       {error ? (
@@ -176,7 +190,7 @@ export default function RemoteBrowser({
         </Alert>
       ) : (
         <Box sx={{ overflow: "auto", flex: 1, minHeight: 0 }}>
-          <Table size="small" stickyHeader>
+          <Table size="small" stickyHeader sx={{ tableLayout: "fixed" }}>
             <TableHead>
               <TableRow>
                 <TableCell padding="checkbox">
@@ -189,10 +203,12 @@ export default function RemoteBrowser({
                   />
                 </TableCell>
                 <TableCell>Name</TableCell>
-                <TableCell align="right" sx={{ width: 110 }}>
+                <TableCell align="right" sx={{ width: 92, whiteSpace: "nowrap" }}>
                   Size
                 </TableCell>
-                <TableCell sx={{ width: 190 }}>Modified</TableCell>
+                <TableCell sx={{ width: 150, whiteSpace: "nowrap" }}>
+                  Modified
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -205,14 +221,23 @@ export default function RemoteBrowser({
                       onChange={() => onToggle(e)}
                     />
                   </TableCell>
-                  <TableCell>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <TableCell sx={{ overflow: "hidden" }}>
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      sx={{ alignItems: "center", minWidth: 0 }}
+                    >
                       {e.kind === "dir" ? (
-                        <FolderIcon fontSize="small" color="primary" />
+                        <FolderIcon
+                          fontSize="small"
+                          color="primary"
+                          sx={{ flexShrink: 0 }}
+                        />
                       ) : (
                         <InsertDriveFileOutlinedIcon
                           fontSize="small"
                           color="disabled"
+                          sx={{ flexShrink: 0 }}
                         />
                       )}
                       {e.kind === "dir" ? (
@@ -220,26 +245,40 @@ export default function RemoteBrowser({
                           component="button"
                           underline="hover"
                           onClick={() => onNavigate(e.path)}
-                          sx={{ textAlign: "left" }}
+                          title={e.name}
+                          sx={{
+                            textAlign: "left",
+                            minWidth: 0,
+                            display: "block",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
                         >
                           {e.name}
                         </Link>
                       ) : (
-                        <Typography variant="body2">{e.name}</Typography>
+                        <Typography variant="body2" noWrap title={e.name}>
+                          {e.name}
+                        </Typography>
                       )}
                       {e.isLink && (
                         <Tooltip title="symlink">
-                          <LinkIcon fontSize="inherit" color="disabled" />
+                          <LinkIcon
+                            fontSize="inherit"
+                            color="disabled"
+                            sx={{ flexShrink: 0 }}
+                          />
                         </Tooltip>
                       )}
                     </Stack>
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                     <Typography variant="caption" color="text.secondary">
                       {e.kind === "dir" ? "—" : bytes(e.size)}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ whiteSpace: "nowrap" }}>
                     <Typography variant="caption" color="text.secondary">
                       {when(e.mtime)}
                     </Typography>

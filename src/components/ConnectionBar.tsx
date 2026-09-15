@@ -42,10 +42,13 @@ export default function ConnectionBar({
   const set = (patch: Partial<Connection>) => onChange({ ...value, ...patch });
 
   return (
-    <Paper variant="outlined" sx={{ p: 2 }}>
+    <Paper variant="outlined" sx={{ p: 2, flexShrink: 0 }}>
       <Stack
         direction={{ xs: "column", md: "row" }}
-        spacing={1.5} sx={{ alignItems: { md: "center" } }}>
+        useFlexGap
+        spacing={1.5}
+        sx={{ alignItems: { md: "center" }, flexWrap: { md: "wrap" } }}
+      >
         <Autocomplete
           freeSolo
           options={hosts}
@@ -62,7 +65,6 @@ export default function ConnectionBar({
           )}
         />
         <TextField
-          size="small"
           label="User"
           placeholder="(from ssh config)"
           sx={{ width: 160 }}
@@ -70,13 +72,15 @@ export default function ConnectionBar({
           onChange={(e) => set({ user: e.target.value })}
         />
         <TextField
-          size="small"
           label="Port"
+          placeholder="22"
           sx={{ width: 96 }}
           value={value.port ?? ""}
+          slotProps={{ htmlInput: { inputMode: "numeric", maxLength: 5 } }}
           onChange={(e) => {
-            const n = parseInt(e.target.value, 10);
-            set({ port: Number.isFinite(n) ? n : null });
+            const digits = e.target.value.replace(/\D/g, "");
+            const n = parseInt(digits, 10);
+            set({ port: n >= 1 && n <= 65535 ? n : null });
           }}
         />
         <Autocomplete
@@ -101,11 +105,11 @@ export default function ConnectionBar({
           startIcon={
             busy ? <CircularProgress size={16} color="inherit" /> : <LinkIcon />
           }
-          sx={{ whiteSpace: "nowrap" }}
+          sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
         >
           {state === "connected" ? "Reconnect" : "Connect"}
         </Button>
-        <Box>
+        <Box sx={{ flexShrink: 0 }}>
           <Chip
             size="small"
             label={
@@ -128,7 +132,7 @@ export default function ConnectionBar({
           />
         </Box>
         <Tooltip title="Setup guide">
-          <IconButton size="small" onClick={onHelp}>
+          <IconButton onClick={onHelp} sx={{ flexShrink: 0 }}>
             <HelpOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -138,7 +142,7 @@ export default function ConnectionBar({
           severity="error"
           sx={{ mt: 1.5, whiteSpace: "pre-wrap" }}
           action={
-            <Button color="inherit" size="small" onClick={onHelp}>
+            <Button color="inherit" onClick={onHelp}>
               Setup guide
             </Button>
           }

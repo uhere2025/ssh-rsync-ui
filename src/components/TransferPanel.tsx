@@ -48,10 +48,18 @@ export default function TransferPanel(p: Props) {
   const [excludeDraft, setExcludeDraft] = useState(p.options.excludes.join(", "));
   const logRef = useRef<HTMLDivElement | null>(null);
 
+  const pinned = useRef(true);
+
+  // Follow new output only while the reader has not scrolled back up.
   useEffect(() => {
     const el = logRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
+    if (el && pinned.current) el.scrollTop = el.scrollHeight;
   }, [p.logs]);
+
+  const onLogScroll = () => {
+    const el = logRef.current;
+    if (el) pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+  };
 
   const set = (patch: Partial<TransferOptions>) =>
     p.onOptions({ ...p.options, ...patch });
@@ -76,23 +84,32 @@ export default function TransferPanel(p: Props) {
   );
 
   return (
-    <Paper variant="outlined" sx={{ p: 1.5, display: "flex", flexDirection: "column", gap: 1.5 }}>
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 1.5,
+        display: "flex",
+        flexDirection: "column",
+        gap: 1.5,
+        flexShrink: 0,
+        minWidth: 0,
+      }}
+    >
       <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
         <TextField
-          size="small"
           label="Download to"
           value={p.destination}
           onChange={(e) => p.onDestination(e.target.value)}
-          sx={{ flex: 1 }}
+          sx={{ flex: 1, minWidth: 0 }}
         />
         <Tooltip title="Choose folder">
-          <IconButton onClick={p.onBrowse}>
+          <IconButton onClick={p.onBrowse} sx={{ flexShrink: 0 }}>
             <FolderOpenIcon />
           </IconButton>
         </Tooltip>
       </Stack>
 
-      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2 }}>
+      <Box sx={{ display: "flex", flexWrap: "wrap", columnGap: 2, rowGap: 0.5 }}>
         {toggle("compress", "Compress", "rsync -z: compress data in transit")}
         {toggle("skipNewer", "Skip newer", "rsync -u: keep newer local files")}
         {toggle("checksum", "Checksum", "rsync -c: compare by checksum, not size/time")}
@@ -108,14 +125,12 @@ export default function TransferPanel(p: Props) {
         <AccordionDetails sx={{ px: 0 }}>
           <Stack spacing={1.5}>
             <TextField
-              size="small"
               label="Bandwidth limit"
               placeholder="e.g. 2M"
               value={p.options.bwlimit}
               onChange={(e) => set({ bwlimit: e.target.value })}
             />
             <TextField
-              size="small"
               label="Exclude patterns (comma separated)"
               placeholder="*.tmp, node_modules"
               value={excludeDraft}
@@ -133,7 +148,12 @@ export default function TransferPanel(p: Props) {
         </AccordionDetails>
       </Accordion>
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+      <Stack
+        direction="row"
+        useFlexGap
+        spacing={1}
+        sx={{ alignItems: "center", flexWrap: "wrap" }}
+      >
         <Button
           variant="contained"
           startIcon={<DownloadIcon />}
@@ -149,6 +169,7 @@ export default function TransferPanel(p: Props) {
           {p.selectedCount > 0 ? ` (${p.selectedCount})` : ""}
         </Button>
         <Button
+          variant="outlined"
           color="error"
           startIcon={<StopIcon />}
           disabled={!p.running}
@@ -157,12 +178,14 @@ export default function TransferPanel(p: Props) {
           Cancel
         </Button>
         {p.job && (
-          <Chip
-            size="small"
-            variant="outlined"
-            label={`root ${p.job.root}`}
-            sx={{ maxWidth: 260 }}
-          />
+          <Tooltip title={`Transfer root: ${p.job.root}`}>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={`root ${p.job.root}`}
+              sx={{ maxWidth: 240, flexShrink: 0 }}
+            />
+          </Tooltip>
         )}
       </Stack>
 
@@ -183,30 +206,33 @@ export default function TransferPanel(p: Props) {
             variant={p.progress ? "determinate" : "indeterminate"}
             value={p.progress?.percent ?? 0}
           />
-          <Stack direction="row" spacing={2} sx={{ mt: 0.5 }}>
-            <Typography variant="caption" color="text.secondary">
-              {Math.round(p.progress?.percent ?? 0)}%
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {bytes(p.progress?.bytes ?? 0)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {p.progress?.rate ?? ""}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {p.progress?.eta ? `ETA ${p.progress.eta}` : ""}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {p.progress?.filesTotal
-                ? `${p.progress.filesDone}/${p.progress.filesTotal} files`
-                : ""}
-            </Typography>
+          <Stack
+            direction="row"
+            useFlexGap
+            spacing={2}
+            sx={{ mt: 0.5, flexWrap: "wrap" }}
+          >
+            {[
+              `${Math.round(p.progress?.percent ?? 0)}%`,
+              bytes(p.progress?.bytes ?? 0),
+              p.progress?.rate,
+              p.progress?.eta && `ETA ${p.progress.eta}`,
+              p.progress?.filesTotal &&
+                `${p.progress.filesDone}/${p.progress.filesTotal} files`,
+            ]
+              .filter(Boolean)
+              .map((stat) => (
+                <Typography key={stat} variant="caption" color="text.secondary">
+                  {stat}
+                </Typography>
+              ))}
           </Stack>
         </Box>
       )}
 
       <Box
         ref={logRef}
+        onScroll={onLogScroll}
         sx={{
           height: 170,
           overflow: "auto",
