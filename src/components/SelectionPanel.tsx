@@ -42,7 +42,7 @@ export default function SelectionPanel({ items, onRemove, onClear }: Props) {
         direction="row"
         spacing={1}
         useFlexGap
-        sx={{ alignItems: "center", flexShrink: 0, p: 1.5, pb: 1 }}
+        sx={{ alignItems: "center", flexShrink: 0, minHeight: 32, p: 1.5, pb: 1 }}
       >
         <Typography variant="subtitle2" sx={{ flex: 1, minWidth: 0 }} noWrap>
           Selection
@@ -56,6 +56,7 @@ export default function SelectionPanel({ items, onRemove, onClear }: Props) {
           <Chip size="small" label={`${dirs} folders`} sx={{ flexShrink: 0 }} />
         )}
         <Button
+          size="small"
           startIcon={<ClearAllIcon />}
           onClick={onClear}
           disabled={items.length === 0}

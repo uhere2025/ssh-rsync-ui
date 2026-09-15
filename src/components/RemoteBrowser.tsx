@@ -99,29 +99,28 @@ export default function RemoteBrowser({
         sx={{ alignItems: "center", flexWrap: "wrap", p: 1.5 }}
       >
         <Tooltip title="Home">
-          <span>
-            <IconButton size="small" onClick={onHome} disabled={loading}>
+          <Box component="span" sx={{ display: "inline-flex" }}>
+            <IconButton onClick={onHome} disabled={loading}>
               <HomeIcon fontSize="small" />
             </IconButton>
-          </span>
+          </Box>
         </Tooltip>
         <Tooltip title="Parent folder">
-          <span>
+          <Box component="span" sx={{ display: "inline-flex" }}>
             <IconButton
-              size="small"
               onClick={() => onNavigate(parentOf(path))}
               disabled={loading || path === "/"}
             >
               <ArrowUpwardIcon fontSize="small" />
             </IconButton>
-          </span>
+          </Box>
         </Tooltip>
         <Tooltip title="Refresh">
-          <span>
-            <IconButton size="small" onClick={onRefresh} disabled={loading}>
+          <Box component="span" sx={{ display: "inline-flex" }}>
+            <IconButton onClick={onRefresh} disabled={loading}>
               <RefreshIcon fontSize="small" />
             </IconButton>
-          </span>
+          </Box>
         </Tooltip>
         <TextField
           size="small"
@@ -163,7 +162,11 @@ export default function RemoteBrowser({
       </Stack>
 
       <Box sx={{ px: 1.5, pb: 1 }}>
-        <Breadcrumbs maxItems={6} separator="›" sx={{ fontSize: 13 }}>
+        <Breadcrumbs
+          maxItems={6}
+          separator="›"
+          sx={{ typography: "body2", minHeight: 24, alignItems: "center" }}
+        >
           {crumbs(path).map((c) => (
             <Link
               key={c.path}
@@ -171,7 +174,6 @@ export default function RemoteBrowser({
               underline="hover"
               color={c.path === path ? "text.primary" : "primary"}
               onClick={() => onNavigate(c.path)}
-              sx={{ fontSize: 13 }}
             >
               {c.label}
             </Link>
@@ -243,6 +245,7 @@ export default function RemoteBrowser({
                       {e.kind === "dir" ? (
                         <Link
                           component="button"
+                          variant="body2"
                           underline="hover"
                           onClick={() => onNavigate(e.path)}
                           title={e.name}

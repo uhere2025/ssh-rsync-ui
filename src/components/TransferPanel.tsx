@@ -79,6 +79,7 @@ export default function TransferPanel(p: Props) {
           />
         }
         label={<Typography variant="body2">{label}</Typography>}
+        sx={{ height: 32, gap: 0.5 }}
       />
     </Tooltip>
   );
@@ -104,7 +105,7 @@ export default function TransferPanel(p: Props) {
         />
         <Tooltip title="Choose folder">
           <IconButton onClick={p.onBrowse} sx={{ flexShrink: 0 }}>
-            <FolderOpenIcon />
+            <FolderOpenIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       </Stack>
@@ -116,8 +117,19 @@ export default function TransferPanel(p: Props) {
         {toggle("dryRun", "Dry run", "rsync -n: simulate, transfer nothing")}
       </Box>
 
-      <Accordion disableGutters elevation={0} sx={{ "&:before": { display: "none" } }}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: 0, minHeight: 0 }}>
+      <Accordion
+        disableGutters
+        elevation={0}
+        sx={{ bgcolor: "transparent", "&:before": { display: "none" } }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon fontSize="small" />}
+          sx={{
+            px: 0,
+            minHeight: 32,
+            "& .MuiAccordionSummary-content": { my: 0, alignItems: "center" },
+          }}
+        >
           <Typography variant="body2" color="text.secondary">
             More options
           </Typography>

@@ -1,7 +1,6 @@
 import {
   Alert,
   Autocomplete,
-  Box,
   Button,
   Chip,
   CircularProgress,
@@ -98,18 +97,28 @@ export default function ConnectionBar({
             />
           )}
         />
-        <Button
-          variant="contained"
-          onClick={onConnect}
-          disabled={busy || !value.host.trim()}
-          startIcon={
-            busy ? <CircularProgress size={16} color="inherit" /> : <LinkIcon />
-          }
-          sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+        {/* Action, status and help stay one row of their own, so stacking the
+            fields on a narrow window does not stretch them to full width. */}
+        <Stack
+          direction="row"
+          spacing={1}
+          sx={{ alignItems: "center", flexShrink: 0 }}
         >
-          {state === "connected" ? "Reconnect" : "Connect"}
-        </Button>
-        <Box sx={{ flexShrink: 0 }}>
+          <Button
+            variant="contained"
+            onClick={onConnect}
+            disabled={busy || !value.host.trim()}
+            startIcon={
+              busy ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <LinkIcon />
+              )
+            }
+            sx={{ whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            {state === "connected" ? "Reconnect" : "Connect"}
+          </Button>
           <Chip
             size="small"
             label={
@@ -130,19 +139,19 @@ export default function ConnectionBar({
             }
             variant={state === "connected" ? "filled" : "outlined"}
           />
-        </Box>
-        <Tooltip title="Setup guide">
-          <IconButton onClick={onHelp} sx={{ flexShrink: 0 }}>
-            <HelpOutlinedIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
+          <Tooltip title="Setup guide">
+            <IconButton onClick={onHelp}>
+              <HelpOutlinedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
       {error && (
         <Alert
           severity="error"
           sx={{ mt: 1.5, whiteSpace: "pre-wrap" }}
           action={
-            <Button color="inherit" onClick={onHelp}>
+            <Button color="inherit" size="small" onClick={onHelp}>
               Setup guide
             </Button>
           }
