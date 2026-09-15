@@ -71,3 +71,7 @@ Backend events: `transfer://progress`, `transfer://log`, `transfer://done`.
 - Identity file paths cannot contain spaces — rsync splits its `-e` string on
   whitespace and does no unquoting.
 - Upload direction is not implemented; this pulls only.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
