@@ -52,6 +52,7 @@ export default function App() {
   const [connState, setConnState] = useState<ConnState>("idle");
   const [connError, setConnError] = useState<string | null>(null);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [envError, setEnvError] = useState<string | null>(null);
 
   const [path, setPath] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -77,10 +78,13 @@ export default function App() {
   const jobRef = useRef<string | null>(null);
 
   useEffect(() => {
-    api.environment().then((e) => {
-      setEnv(e);
-      setDestination((d) => d || e.defaultDestination);
-    });
+    api
+      .environment()
+      .then((e) => {
+        setEnv(e);
+        setDestination((d) => d || e.defaultDestination);
+      })
+      .catch((e) => setEnvError(String(e)));
   }, []);
 
   useEffect(() => {
@@ -204,6 +208,8 @@ export default function App() {
         gap: 1.5,
         p: 1.5,
         boxSizing: "border-box",
+        overflow: "hidden",
+        minWidth: 0,
       }}
     >
       <ConnectionBar
@@ -217,8 +223,14 @@ export default function App() {
         onHelp={() => setGuideOpen(true)}
       />
 
+      {envError && (
+        <Alert severity="error" sx={{ flexShrink: 0, whiteSpace: "pre-wrap" }}>
+          Could not inspect the local environment: {envError}
+        </Alert>
+      )}
+
       {missingTools && (
-        <Alert severity="error">
+        <Alert severity="error" sx={{ flexShrink: 0 }}>
           {!env?.ssh && "ssh not found. "}
           {!env?.rsync && "rsync not found. "}
           Install them and restart the app.
@@ -268,7 +280,6 @@ export default function App() {
                   Auth uses your ssh keys / agent — password prompts are disabled.
                 </Typography>
                 <Button
-                  size="small"
                   startIcon={<HelpOutlinedIcon />}
                   onClick={() => setGuideOpen(true)}
                 >
@@ -281,7 +292,13 @@ export default function App() {
 
         <Stack
           spacing={1.5}
-          sx={{ width: { xs: "auto", md: 460 }, minHeight: 0 }}
+          sx={{
+            width: { xs: "auto", md: 430 },
+            flexShrink: 0,
+            minHeight: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+          }}
         >
           <SelectionPanel
             items={[...selected.values()]}

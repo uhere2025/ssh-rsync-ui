@@ -1,13 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { CssBaseline, ThemeProvider } from "@mui/material";
 import App from "./App";
-
-const theme = createTheme({
-  colorSchemes: { dark: true, light: true },
-  shape: { borderRadius: 8 },
-  typography: { fontSize: 13 },
-});
+import { theme } from "./theme";
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

@@ -29,29 +29,46 @@ export default function SelectionPanel({ items, onRemove, onClear }: Props) {
   return (
     <Paper
       variant="outlined"
-      sx={{ display: "flex", flexDirection: "column", minHeight: 0, flex: 1 }}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        flex: "1 1 auto",
+        minWidth: 0,
+        minHeight: 168,
+        overflow: "hidden",
+      }}
     >
       <Stack
         direction="row"
         spacing={1}
-        sx={{ alignItems: "center", p: 1.5, pb: 1 }}
+        useFlexGap
+        sx={{ alignItems: "center", flexShrink: 0, minHeight: 32, p: 1.5, pb: 1 }}
       >
-        <Typography variant="subtitle2" sx={{ flex: 1 }}>
+        <Typography variant="subtitle2" sx={{ flex: 1, minWidth: 0 }} noWrap>
           Selection
         </Typography>
-        <Chip size="small" label={`${files.length} files`} />
-        {dirs > 0 && <Chip size="small" label={`${dirs} folders`} />}
+        <Chip
+          size="small"
+          label={`${files.length} files`}
+          sx={{ flexShrink: 0 }}
+        />
+        {dirs > 0 && (
+          <Chip size="small" label={`${dirs} folders`} sx={{ flexShrink: 0 }} />
+        )}
         <Button
           size="small"
           startIcon={<ClearAllIcon />}
           onClick={onClear}
           disabled={items.length === 0}
+          sx={{ flexShrink: 0 }}
         >
           Clear
         </Button>
       </Stack>
 
-      <Box sx={{ overflow: "auto", flex: 1, minHeight: 88 }}>
+      <Box
+        sx={{ overflowY: "auto", overflowX: "hidden", flex: 1, minHeight: 0 }}
+      >
         {items.length === 0 ? (
           <Typography variant="body2" color="text.secondary" sx={{ p: 2 }}>
             Tick files or folders on the left. Selections survive navigation, so
@@ -94,7 +111,7 @@ export default function SelectionPanel({ items, onRemove, onClear }: Props) {
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ px: 2, py: 1 }}
+          sx={{ px: 2, py: 1, flexShrink: 0 }}
         >
           {bytes(known)} in files{dirs > 0 ? " (folders not counted)" : ""}
         </Typography>
