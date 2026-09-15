@@ -1,0 +1,151 @@
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  IconButton,
+  Tooltip,
+  Paper,
+  Stack,
+  TextField,
+} from "@mui/material";
+import HelpOutlinedIcon from "@mui/icons-material/HelpOutlined";
+import LinkIcon from "@mui/icons-material/Link";
+import type { Connection } from "../types";
+
+export type ConnState = "idle" | "connecting" | "connected" | "error";
+
+type Props = {
+  value: Connection;
+  onChange: (c: Connection) => void;
+  hosts: string[];
+  identities: string[];
+  state: ConnState;
+  error: string | null;
+  onConnect: () => void;
+  onHelp: () => void;
+};
+
+export default function ConnectionBar({
+  value,
+  onChange,
+  hosts,
+  identities,
+  state,
+  error,
+  onConnect,
+  onHelp,
+}: Props) {
+  const busy = state === "connecting";
+  const set = (patch: Partial<Connection>) => onChange({ ...value, ...patch });
+
+  return (
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        spacing={1.5} sx={{ alignItems: { md: "center" } }}>
+        <Autocomplete
+          freeSolo
+          options={hosts}
+          inputValue={value.host}
+          onInputChange={(_e, v) => set({ host: v })}
+          sx={{ minWidth: 220, flex: 1 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              size="small"
+              label="Host or ssh_config alias"
+              placeholder="server.example.com"
+            />
+          )}
+        />
+        <TextField
+          size="small"
+          label="User"
+          placeholder="(from ssh config)"
+          sx={{ width: 160 }}
+          value={value.user ?? ""}
+          onChange={(e) => set({ user: e.target.value })}
+        />
+        <TextField
+          size="small"
+          label="Port"
+          sx={{ width: 96 }}
+          value={value.port ?? ""}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            set({ port: Number.isFinite(n) ? n : null });
+          }}
+        />
+        <Autocomplete
+          freeSolo
+          options={identities}
+          inputValue={value.identityFile ?? ""}
+          onInputChange={(_e, v) => set({ identityFile: v })}
+          sx={{ minWidth: 200, flex: 1 }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              size="small"
+              label="Identity file"
+              placeholder="(agent / ssh config)"
+            />
+          )}
+        />
+        <Button
+          variant="contained"
+          onClick={onConnect}
+          disabled={busy || !value.host.trim()}
+          startIcon={
+            busy ? <CircularProgress size={16} color="inherit" /> : <LinkIcon />
+          }
+          sx={{ whiteSpace: "nowrap" }}
+        >
+          {state === "connected" ? "Reconnect" : "Connect"}
+        </Button>
+        <Box>
+          <Chip
+            size="small"
+            label={
+              state === "connected"
+                ? "connected"
+                : state === "error"
+                  ? "failed"
+                  : busy
+                    ? "connecting"
+                    : "offline"
+            }
+            color={
+              state === "connected"
+                ? "success"
+                : state === "error"
+                  ? "error"
+                  : "default"
+            }
+            variant={state === "connected" ? "filled" : "outlined"}
+          />
+        </Box>
+        <Tooltip title="Setup guide">
+          <IconButton size="small" onClick={onHelp}>
+            <HelpOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      </Stack>
+      {error && (
+        <Alert
+          severity="error"
+          sx={{ mt: 1.5, whiteSpace: "pre-wrap" }}
+          action={
+            <Button color="inherit" size="small" onClick={onHelp}>
+              Setup guide
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
+      )}
+    </Paper>
+  );
+}
