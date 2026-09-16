@@ -29,6 +29,7 @@ export type TransferOptions = {
   dryRun: boolean;
   checksum: boolean;
   skipNewer: boolean;
+  wholeFile: boolean;
   bwlimit: string;
   excludes: string[];
 };

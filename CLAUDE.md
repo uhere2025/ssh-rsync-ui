@@ -46,14 +46,19 @@ layout under the common root is preserved at the destination.
 
 Fixed flags: `-a -r -s --partial --from0 --info=progress2 --no-inc-recursive --out-format=%n`.
 `-r` is required because `--files-from` cancels `-a`'s recursion; `--no-inc-recursive` is what
-makes the total percentage meaningful. UI toggles append `-z`, `-n`, `-c`, `-u`, `--bwlimit=`,
-`--exclude=`.
+makes the total percentage meaningful. UI toggles append `-z`, `-n`, `-c`, `-u`, `-W`,
+`--bwlimit=`, `--exclude=`.
 
 Three threads per job: stdin writer, stderr reader, stdout reader. The stdout reader splits on
 both `\r` (progress) and `\n` (file lines), and calls `finish()` when the pipe closes — that is
 the single place the child is reaped and `transfer://done` is emitted. The child is registered
 in `Jobs` *before* the threads spawn so a tiny transfer cannot finish before `finish()` can find
 it.
+
+rsync forks, so the spawned pid is not the process moving data. The child gets its own process
+group (`process_group(0)`) and `cancel()` signals the *group* — SIGTERM first, so rsync cleans up
+and honours `--partial`, then SIGKILL after 3s if it is still registered. Killing the pid alone
+leaves a sibling transferring while the UI reports "cancelled".
 
 Events (`transfer://progress`, `transfer://log`, `transfer://done`) are global; every payload
 carries `jobId` and `App.tsx` filters against `jobRef.current`.

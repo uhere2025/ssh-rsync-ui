@@ -37,6 +37,8 @@ pub struct TransferRequest {
     #[serde(default)]
     pub skip_newer: bool,
     #[serde(default)]
+    pub whole_file: bool,
+    #[serde(default)]
     pub bwlimit: Option<String>,
     #[serde(default)]
     pub excludes: Vec<String>,
@@ -166,6 +168,11 @@ fn build(req: &TransferRequest) -> Result<(Vec<String>, String, Vec<String>), St
     if req.skip_newer {
         args.push("-u".into());
     }
+    if req.whole_file {
+        // Skip the delta scan: the sender and receiver would otherwise read and
+        // checksum an existing destination file end to end before sending a byte.
+        args.push("-W".into());
+    }
     if let Some(b) = req
         .bwlimit
         .as_ref()
@@ -269,11 +276,19 @@ pub fn start(app: AppHandle, jobs: &Jobs, req: TransferRequest) -> Result<Starte
     std::fs::create_dir_all(req.destination.trim())
         .map_err(|e| format!("Cannot create destination folder: {e}"))?;
 
-    let mut child = Command::new("rsync")
-        .args(&args)
+    let mut cmd = Command::new("rsync");
+    cmd.args(&args)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    // Own process group: rsync forks a generator and spawns ssh, and cancel has
+    // to reach all of them, not just the pid we hold.
+    #[cfg(unix)]
+    {
+        use std::os::unix::process::CommandExt;
+        cmd.process_group(0);
+    }
+    let mut child = cmd
         .spawn()
         .map_err(|e| format!("Could not run rsync: {e}"))?;
 
@@ -376,13 +391,45 @@ fn app_jobs(app: &AppHandle) -> tauri::State<'_, Jobs> {
     app.state::<Jobs>()
 }
 
-pub fn cancel(jobs: &Jobs, job_id: &str) -> Result<(), String> {
-    jobs.cancelled.lock().unwrap().insert(job_id.to_string());
-    let mut map = jobs.children.lock().unwrap();
-    match map.get_mut(job_id) {
-        Some(child) => child
-            .kill()
-            .map_err(|e| format!("Could not stop rsync: {e}")),
-        None => Ok(()), // already finished
+/// SIGKILL to the parent pid alone leaves rsync's forked sibling transferring,
+/// so the UI reports "cancelled" while bytes keep landing. Signal the group.
+#[cfg(unix)]
+fn signal_group(pid: u32, sig: i32) {
+    unsafe {
+        libc::kill(-(pid as i32), sig);
     }
+}
+
+pub fn cancel(app: &AppHandle, job_id: &str) -> Result<(), String> {
+    let jobs = app_jobs(app);
+    jobs.cancelled.lock().unwrap().insert(job_id.to_string());
+    let pid = match jobs.children.lock().unwrap().get(job_id) {
+        Some(child) => child.id(),
+        None => return Ok(()), // already finished
+    };
+
+    #[cfg(unix)]
+    {
+        // SIGTERM, not SIGKILL: rsync then cleans up and leaves the partial file
+        // in place, which is what the cancel message promises.
+        signal_group(pid, libc::SIGTERM);
+        let app = app.clone();
+        let id = job_id.to_string();
+        std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_secs(3));
+            if app_jobs(&app).children.lock().unwrap().contains_key(&id) {
+                signal_group(pid, libc::SIGKILL);
+            }
+        });
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = pid;
+        if let Some(child) = jobs.children.lock().unwrap().get_mut(job_id) {
+            child
+                .kill()
+                .map_err(|e| format!("Could not stop rsync: {e}"))?;
+        }
+    }
+    Ok(())
 }

@@ -107,8 +107,8 @@ fn start_transfer(
 }
 
 #[tauri::command]
-fn cancel_transfer(jobs: State<'_, transfer::Jobs>, job_id: String) -> Result<(), String> {
-    transfer::cancel(&jobs, &job_id)
+fn cancel_transfer(app: AppHandle, job_id: String) -> Result<(), String> {
+    transfer::cancel(&app, &job_id)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
