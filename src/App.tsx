@@ -24,6 +24,7 @@ const defaultOptions: TransferOptions = {
   dryRun: false,
   checksum: false,
   skipNewer: false,
+  wholeFile: false,
   bwlimit: "",
   excludes: [],
 };
@@ -33,6 +34,29 @@ type Persisted = {
   destination: string;
   options: TransferOptions;
 };
+
+// rsync says nothing while it builds the file list, so the wait before the
+// first progress line looks like a hang. Name what is actually happening.
+function startNotice(job: StartedJob, options: TransferOptions): LogLine[] {
+  const n = job.files.length;
+  const lines = [
+    `Building file list for ${n} item${n === 1 ? "" : "s"} under ${job.root} ` +
+      `- no data moves until both sides have enumerated the selection.`,
+  ];
+  if (options.checksum) {
+    lines.push(
+      "Checksum mode is on: every selected file is read and hashed on both " +
+        "ends before anything transfers.",
+    );
+  }
+  if (!options.wholeFile) {
+    lines.push(
+      "Files that already exist at the destination are scanned for deltas " +
+        "first; enable Whole file to skip that.",
+    );
+  }
+  return lines.map((line) => ({ level: "info", line }));
+}
 
 function loadPersisted(): Partial<Persisted> {
   try {
@@ -64,7 +88,7 @@ export default function App() {
 
   const [destination, setDestination] = useState(saved.destination ?? "");
   const [options, setOptions] = useState<TransferOptions>(
-    saved.options ?? defaultOptions,
+    { ...defaultOptions, ...saved.options },
   );
 
   const [job, setJob] = useState<StartedJob | null>(null);
@@ -188,6 +212,10 @@ export default function App() {
       jobRef.current = started.jobId;
       setJob(started);
       setRunning(true);
+      // rsync builds the whole file list before it moves a byte
+      // (--no-inc-recursive), and says nothing while it does. Without this the
+      // wait before the first progress line looks like a hang.
+      setLogs(startNotice(started, options));
     } catch (e) {
       setTransferError(String(e));
     }

@@ -65,7 +65,7 @@ export default function TransferPanel(p: Props) {
     p.onOptions({ ...p.options, ...patch });
 
   const toggle = (
-    key: "compress" | "dryRun" | "checksum" | "skipNewer",
+    key: "compress" | "dryRun" | "checksum" | "skipNewer" | "wholeFile",
     label: string,
     hint: string,
   ) => (
@@ -114,6 +114,13 @@ export default function TransferPanel(p: Props) {
         {toggle("compress", "Compress", "rsync -z: compress data in transit")}
         {toggle("skipNewer", "Skip newer", "rsync -u: keep newer local files")}
         {toggle("checksum", "Checksum", "rsync -c: compare by checksum, not size/time")}
+        {toggle(
+          "wholeFile",
+          "Whole file",
+          "rsync -W: send files whole instead of scanning an existing destination " +
+            "file for deltas first. Faster to start on a fast link, but a resumed " +
+            "transfer restarts from zero.",
+        )}
         {toggle("dryRun", "Dry run", "rsync -n: simulate, transfer nothing")}
       </Box>
 
